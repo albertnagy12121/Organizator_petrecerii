@@ -1,0 +1,192 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizator Petreceri</title>
+    <style>
+        /* Stil general */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e5ddd5;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        
+        h1 {
+            color: #075e54;
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        /* Container principal pentru petreceri */
+        #container-petreceri {
+            width: 90%;
+            max-width: 400px;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .petrecere {
+            padding: 15px;
+            background-color: #dcf8c6;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+            font-size: 16px;
+        }
+        
+        #btn-creeaza {
+            width: 90%;
+            padding: 10px;
+            font-size: 16px;
+            color: #ffffff;
+            background-color: #25d366;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        #btn-creeaza:hover {
+            background-color: #1eb255;
+        }
+
+        /* Formularul pentru adăugarea unei petreceri noi */
+        #form-container {
+            display: none;
+            margin-top: 20px;
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        input[type="text"], input[type="date"], input[type="number"], input[type="password"] {
+            width: 90%;
+            padding: 8px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button {
+            width: 90%;
+            padding: 10px;
+            font-size: 16px;
+            color: black;
+            background-color: #128c7e;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #0a7b6d;
+        }
+    </style>
+</head>
+<body>
+    <div id="container-petreceri">
+        <h1>Organizator_Petreceri</h1>
+        
+        <div id="list-petreceri">
+            <!-- Acest div va fi populat cu petreceri -->
+        </div>
+        
+        <button id="btn-creeaza" onclick="showForm()">Creează o petrecere nouă</button>
+        
+        <div id="form-container">
+            <input type="text" id="nume" placeholder="Nume petrecere" required>
+            <input type="date" id="data" required>
+            <input type="text" id="locatie" placeholder="Locatie" required>
+            <input type="number" id="buget" placeholder="Buget" required>
+            <input type="text" id="necesitati" placeholder="Lucruri necesare" required>
+            <input type="password" id="parola" placeholder="Setează o parolă" required>
+            <button onclick="addParty()">Adaugă Petrecere</button>
+        </div>
+    </div>
+
+    <script>
+        function loadParties() {
+            fetch('get_parties.php')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('list-petreceri');
+                    container.innerHTML = '';
+                    data.forEach(petrecere => {
+                        const div = document.createElement('div');
+                        div.className = 'petrecere';
+                        div.innerHTML = `
+                            <strong>${petrecere.nume}</strong><br>
+                            Data: ${petrecere.data}<br>
+                            Locatie: ${petrecere.locatie}<br>
+                            Buget: ${petrecere.buget} RON
+                        `;
+                        div.onclick = () => requestPassword(petrecere.id);
+                        container.appendChild(div);
+                    });
+                });
+        }
+
+        function requestPassword(id) {
+            const parola = prompt("Introdu parola pentru acces la petrecere:");
+            if (parola) {
+                fetch(`verify_password.php?id=${id}&parola=${parola}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.href = `chat.php?id=${id}`;
+                        } else {
+                            alert("Parola incorectă!");
+                        }
+                    });
+            }
+        }
+
+        function showForm() {
+            document.getElementById('form-container').style.display = 'block';
+        }
+
+        function addParty() {
+            const nume = document.getElementById('nume').value;
+            const data = document.getElementById('data').value;
+            const locatie = document.getElementById('locatie').value;
+            const buget = document.getElementById('buget').value;
+            const necesitati = document.getElementById('necesitati').value;
+            const parola = document.getElementById('parola').value;
+
+            const formData = new FormData();
+            formData.append('nume', nume);
+            formData.append('data', data);
+            formData.append('locatie', locatie);
+            formData.append('buget', buget);
+            formData.append('necesitati', necesitati);
+            formData.append('parola', parola);
+
+            fetch('add_party.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert(data);
+                loadParties();
+                document.getElementById('form-container').style.display = 'none';
+            });
+        }
+
+        loadParties();
+    </script>
+</body>
+</html>
